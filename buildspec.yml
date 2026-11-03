@@ -1,0 +1,17 @@
+version: 0.2
+# Spec 2 - runs on every commit to master (webhook filter set in CodeBuild)
+phases:
+  pre_build:
+    commands:
+      - echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+      - IMAGE=$DOCKERHUB_USER/capstone-website
+      - TAG=cb-$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7)
+  build:
+    commands:
+      - echo "Building $IMAGE:$TAG"
+      - docker build -t $IMAGE:$TAG -t $IMAGE:cb-latest .
+  post_build:
+    commands:
+      - docker push $IMAGE:$TAG
+      - docker push $IMAGE:cb-latest
+      - echo "CodeBuild done for commit $TAG"
